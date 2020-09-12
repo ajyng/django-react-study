@@ -18,6 +18,9 @@
         <tbody>
             {% for post in post_list %}
                 <tr>
+                    <td>
+                        {{post.pk}}
+                    </td>
                     <td>{{post.message}}</td>
                     <td>
                         {% if post.photo %}

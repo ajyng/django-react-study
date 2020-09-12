@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Post
 from django.http import HttpRequest, HttpResponse, Http404
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 # Create your views here.
 
 # def post_list(request):
@@ -15,20 +15,33 @@ from django.views.generic import ListView
 #         'q' : q,
 #     })
 
-post_list = ListView.as_view(model=Post)
+post_list = ListView.as_view(model=Post, paginate_by=2)
 # CBV(클래스 기반 호출)로 구현
 
+class PostDetailView(DetailView):
+    model = Post
 
-def post_detail(request : HttpRequest, pk: int) -> HttpResponse:
-    post = get_object_or_404(Post, pk=pk)
-    # try:
-    #     post = Post.objects.get(pk=pk) # 없으면 DoesNotExist 예외 발생
-    #     # 앞 pk는 필드의 종류, 뒤 pk는 인자로 넘어온 값
-    # except Post.DoesNotExist:
-    #     raise Http404
-    return render(request, 'instagram/post_detail.html',{
-        'post' : post,
-    })
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not self.request.user.is_authenticated:
+            qs = qs.filter(is_public=True)
+        return qs
+
+post_detail = PostDetailView.as_view()
+
+
+
+
+# def post_detail(request : HttpRequest, pk: int) -> HttpResponse:
+#     post = get_object_or_404(Post, pk=pk)
+#     # try:
+#     #     post = Post.objects.get(pk=pk) # 없으면 DoesNotExist 예외 발생
+#     #     # 앞 pk는 필드의 종류, 뒤 pk는 인자로 넘어온 값
+#     # except Post.DoesNotExist:
+#     #     raise Http404
+#     return render(request, 'instagram/post_detail.html',{
+#         'post' : post,
+#     })
 
 def archives_year(request, year):
     return HttpResponse(f"{year}년 archives")
