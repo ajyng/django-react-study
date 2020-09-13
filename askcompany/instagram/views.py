@@ -1,7 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Post
 from django.http import HttpRequest, HttpResponse, Http404
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, ArchiveIndexView, YearArchiveView
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 # Create your views here.
 
 # def post_list(request):
@@ -15,8 +17,15 @@ from django.views.generic import ListView, DetailView
 #         'q' : q,
 #     })
 
-post_list = ListView.as_view(model=Post, paginate_by=2)
+# post_list = ListView.as_view(model=Post, paginate_by=2)
 # CBV(클래스 기반 호출)로 구현
+
+@method_decorator(login_required, name='dispatch')
+class PostListView(ListView):
+    model = Post
+    paginate_by = 10
+
+post_list = PostListView.as_view()
 
 class PostDetailView(DetailView):
     model = Post
@@ -43,5 +52,9 @@ post_detail = PostDetailView.as_view()
 #         'post' : post,
 #     })
 
-def archives_year(request, year):
-    return HttpResponse(f"{year}년 archives")
+# def archives_year(request, year):
+#     return HttpResponse(f"{year}년 archives")
+
+post_archive = ArchiveIndexView.as_view(model=Post, date_field='created_at', paginate_by=10)
+
+post_archive_year = YearArchiveView.as_view(model=Post, date_field='created_at', make_object_list=True)

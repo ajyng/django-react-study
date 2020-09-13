@@ -25,6 +25,7 @@ urlpatterns = [
         # url='/instagram'
         pattern_name='instagram:post_list', # 더 선호하는 방식!
     ), name='root'),
+    
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('blog1/', include('blog1.urls')),
