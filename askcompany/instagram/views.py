@@ -1,9 +1,10 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from .models import Post
 from django.http import HttpRequest, HttpResponse, Http404
 from django.views.generic import ListView, DetailView, ArchiveIndexView, YearArchiveView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from .forms import PostForm
 # Create your views here.
 
 # def post_list(request):
@@ -19,6 +20,19 @@ from django.utils.decorators import method_decorator
 
 # post_list = ListView.as_view(model=Post, paginate_by=2)
 # CBV(클래스 기반 호출)로 구현
+
+def post_new(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save()
+            return redirect(post)
+    else:
+        form = PostForm()
+
+    return render(request, 'instagram/post_form.html', {
+        'form' : form,
+    })
 
 @method_decorator(login_required, name='dispatch')
 class PostListView(ListView):

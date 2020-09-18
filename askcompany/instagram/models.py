@@ -1,11 +1,14 @@
 from django.db import models
+from django.core.validators import MinLengthValidator
 from django.conf import settings
 from django.urls import reverse
 
 # Create your models here.
 class Post(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    message = models.TextField()
+    message = models.TextField(
+        validators=[MinLengthValidator(10)]
+    )
     photo = models.ImageField(blank=True, upload_to='instagram/post/%Y/%M/%D')
     tag_set = models.ManyToManyField('tag', blank=True) # Tag 모델은 아래에 있기 때문에, 문자열로 명시
     is_public = models.BooleanField(default = False, verbose_name='공개여부')
