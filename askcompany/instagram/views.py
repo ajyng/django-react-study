@@ -5,6 +5,7 @@ from django.views.generic import ListView, DetailView, ArchiveIndexView, YearArc
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from .forms import PostForm
+from django.contrib.messages import error
 # Create your views here.
 
 # def post_list(request):
@@ -21,14 +22,40 @@ from .forms import PostForm
 # post_list = ListView.as_view(model=Post, paginate_by=2)
 # CBV(클래스 기반 호출)로 구현
 
+@login_required # request.user을 외래키 할당하려면 필히 로그인 상황임을 보장 받아야 함.
 def post_new(request):
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
-            post = form.save()
+
+            post = form.save(commit=False)
+            post.author = request.user
+            post.save()
+
             return redirect(post)
     else:
         form = PostForm()
+
+    return render(request, 'instagram/post_form.html', {
+        'form' : form,
+    })
+    
+@login_required
+def post_edit(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+
+    # 작성자 Check Tip!
+    if post.author != request.user:
+        messages.error(request, '작성자만 수정할 수 있습니다.')
+        return redirect(post)
+
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            post = form.save()
+            return redirect(post)
+    else:
+        form = PostForm(instance=post)
 
     return render(request, 'instagram/post_form.html', {
         'form' : form,
