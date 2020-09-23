@@ -6,20 +6,24 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from .forms import PostForm
 from django.contrib.messages import error
+from django.contrib import messages
 # Create your views here.
 
-# def post_list(request):
-#     qs = Post.objects.all() # 전체를 가져올 준비
-#     q = request.GET.get('q', '') # q라는 이름의 인자가 있으면 가져오고(request에서 q라는 이름으로 데이터를 날리기 때문), 없으면 None
-#     if q:
-#         qs = qs.filter(message__icontains=q)
-#         # instagram/templates/instagram/post_list.html
-#     return render(request, 'instagram/post_list.html', {
-#         'post_list' : qs,
-#         'q' : q,
-#     })
+def post_list(request):
+    qs = Post.objects.all() # 전체를 가져올 준비
+    q = request.GET.get('q', '') # q라는 이름의 인자가 있으면 가져오고(request에서 q라는 이름으로 데이터를 날리기 때문), 없으면 None
+    if q:
+        qs = qs.filter(message__icontains=q)
+        # instagram/templates/instagram/post_list.html
 
-# post_list = ListView.as_view(model=Post, paginate_by=2)
+    # messages.info(request, 'message 테스트')
+
+    return render(request, 'instagram/post_list.html', {
+        'post_list' : qs,
+        'q' : q,
+    })
+
+post_list = ListView.as_view(model=Post, paginate_by=10)
 # CBV(클래스 기반 호출)로 구현
 
 @login_required # request.user을 외래키 할당하려면 필히 로그인 상황임을 보장 받아야 함.
@@ -31,13 +35,14 @@ def post_new(request):
             post = form.save(commit=False)
             post.author = request.user
             post.save()
-
+            messages.info(request, '포스팅을 저장했습니다.')
             return redirect(post)
     else:
         form = PostForm()
 
     return render(request, 'instagram/post_form.html', {
         'form' : form,
+        'post' : None,
     })
     
 @login_required
@@ -53,20 +58,33 @@ def post_edit(request, pk):
         form = PostForm(request.POST, request.FILES, instance=post)
         if form.is_valid():
             post = form.save()
+            messages.info(request, '포스팅을 수정했습니다.')
             return redirect(post)
     else:
         form = PostForm(instance=post)
 
     return render(request, 'instagram/post_form.html', {
         'form' : form,
+        'post' : post,
     })
 
-@method_decorator(login_required, name='dispatch')
-class PostListView(ListView):
-    model = Post
-    paginate_by = 10
+@login_required
+def post_delete(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    if request.method == 'POST':
+        post.delete()
+        messages.success(request, '포스팅을 삭제했습니다.')
+        return redirect('instagram:post_list')
+    return render(request, 'instagram/post_confirm_delete.html', {
+        'post':post,
+    })
 
-post_list = PostListView.as_view()
+# @method_decorator(login_required, name='dispatch')
+# class PostListView(ListView):
+#     model = Post
+#     paginate_by = 10
+
+# post_list = PostListView.as_view()
 
 class PostDetailView(DetailView):
     model = Post
